@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🌱 10% Rule by Kong - ออมก่อน ค่อยใช้</title>
+  
+  <!-- SEO & PWA Meta -->
+  <meta name="description" content="แอปจัดการการเงินส่วนบุคคลตามหลักการ 'ออมก่อน ค่อยใช้' (Pay Yourself First) บันทึกรายได้ แบ่งเงินอัตโนมัติ หักค่าใช้จ่าย Self Tax และระบบเงินให้ยืม">
+  <meta name="theme-color" content="#047857">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="10% Rule">
+
+  <!-- Manifest & Favicon -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌱</text></svg>">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-info">
+        <h1 class="app-title"><span class="brand-icon">🌱</span> 10% Rule <span class="by-author">by Kong</span></h1>
+        <p class="app-motto">“ออมก่อน ค่อยใช้”</p>
+      </div>
+      <div class="header-actions">
+        <button id="btn-reset-app" class="icon-btn danger-light" title="รีเซ็ตข้อมูล" aria-label="รีเซ็ตข้อมูล">
+          🔄
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- Month Selector Bar -->
+    <section class="month-selector-card card">
+      <div class="month-nav">
+        <button id="btn-prev-month" class="btn-icon-text" aria-label="เดือนก่อนหน้า">
+          ‹ เดือนก่อน
+        </button>
+        <div class="current-month-display">
+          <span id="display-month-name" class="month-text">กันยายน 2569</span>
+        </div>
+        <button id="btn-next-month" class="btn-icon-text" aria-label="เดือนถัดไป">
+          เดือนถัดไป ›
+        </button>
+      </div>
+      <div class="month-actions">
+        <button id="btn-current-month" class="btn-subtle btn-sm">
+          ↻ กลับเดือนปัจจุบัน
+        </button>
+      </div>
+    </section>
+
+    <!-- NEW SECTION 0: 📊 ภาพรวมการเงิน & มูลค่าสุทธิ (Financial Dashboard & Net Worth) -->
+    <section class="card net-worth-dashboard-section" id="financial-dashboard-section">
+      <div class="card-header flex-between flex-wrap gap-2">
+        <h2>📊 ภาพรวมการเงิน</h2>
+        <div class="dashboard-header-actions">
+          <button id="btn-toggle-month-compare" class="btn btn-subtle btn-sm" type="button">
+            📊 เปรียบเทียบเดือนนี้ ↔ เดือนก่อน
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Card: 💎 มูลค่าการเงินสุทธิ -->
+      <div class="net-worth-hero-card">
+        <div class="net-worth-hero-content">
+          <div class="net-worth-title-badge">💎 มูลค่าการเงินสุทธิ</div>
+          <div id="display-net-worth" class="net-worth-amount">0 บาท</div>
+          <div class="net-worth-breakdown-sub">
+            <span class="sub-label">สูตรคำนวณ:</span>
+            <span>เงินใน Wallet (<strong id="formula-wallets">0 บาท</strong>) + เงินที่คนอื่นค้างเรา (<strong id="formula-receivables">0 บาท</strong>) - หนี้ที่เราต้องจ่าย (<strong id="formula-debts">0 บาท</strong>)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Assets & Liabilities Grid -->
+      <div class="financial-overview-grid mt-3">
+        <div class="fin-stat-card">
+          <div class="fin-stat-header">
+            <span class="fin-stat-icon">💰</span>
+            <span class="fin-stat-title">เงินทั้งหมด</span>
+          </div>
+          <div id="fin-total-wallets" class="fin-stat-value">0 บาท</div>
+          <div class="fin-stat-sub text-muted">รวมยอดในทุก Wallet</div>
+        </div>
+
+        <div class="fin-stat-card savings-border">
+          <div class="fin-stat-header">
+            <span class="fin-stat-icon">🌱</span>
+            <span class="fin-stat-title">เงินออม</span>
+          </div>
+          <div id="fin-savings-wallet" class="fin-stat-value text-highlight green">0 บาท</div>
+          <div class="fin-stat-sub text-muted">ใน Wallet เงินออม</div>
+        </div>
+
+        <div class="fin-stat-card investment-border">
+          <div class="fin-stat-header">
+            <span class="fin-stat-icon">📈</span>
+            <span class="fin-stat-title">เงินลงทุน</span>
+          </div>
+          <div id="fin-investment-wallet" class="fin-stat-value text-highlight blue">0 บาท</div>
+          <div class="fin-stat-sub text-muted">ใน Wallet เงินลงทุน</div>
+        </div>
+
+        <div class="fin-stat-card spending-border">
+          <div class="fin-stat-header">
+            <span class="fin-stat-icon">💳</span>
+            <span class="fin-stat-title">เงินใช้จ่าย</span>
+          </div>
+          <div id="fin-spending-wallet" class="fin-stat-value">0 บาท</div>
+          <div class="fin-stat-sub text-muted">ใน Wallet เงินใช้จ่าย</div>
+        </div>
+
+        <div class="fin-stat-card loans-border">
+          <div class="fin-stat-header">
+            <span class="fin-stat-icon">💸</span>
+            <span class="fin-stat-title">เงินที่คนอื่นค้างเรา</span>
+          </div>
+          <div id="fin-loans-outstanding" class="fin-stat-value text-highlight orange">0 บาท</div>
+          <div class="fin-stat-sub text-muted">ยอดลูกหนี้คงเหลือ</div>
+        </div>
+
+        <div class="fin-stat-card debts-border">
+          <div class="fin-stat-header">
+            <span class="fin-stat-icon">📤</span>
+            <span class="fin-stat-title">หนี้ที่เราต้องจ่าย</span>
+          </div>
+          <div id="fin-personal-debts" class="fin-stat-value text-danger">0 บาท</div>
+          <div class="fin-stat-sub text-muted">หนี้ส่วนตัวคงเหลือ</div>
+        </div>
+      </div>
+
+      <!-- Monthly Report Section -->
+      <div class="monthly-summary-container mt-4">
+        <div class="card-sub-header flex-between mb-3">
+          <h3 class="text-md font-bold">📅 รายงานเดือนนี้ (<span id="summary-month-label">กันยายน 2569</span>)</h3>
+        </div>
+
+        <div class="monthly-summary-grid">
+          <div class="summary-item">
+            <span class="summary-label">รายรับ</span>
+            <span id="sum-month-income" class="summary-val text-highlight green">0 บาท</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">รายจ่าย</span>
+            <span id="sum-month-expense" class="summary-val text-danger">0 บาท</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">เงินออม</span>
+            <span id="sum-month-savings" class="summary-val text-highlight green">0 บาท</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">เงินลงทุน</span>
+            <span id="sum-month-investment" class="summary-val text-highlight blue">0 บาท</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">ปล่อยกู้</span>
+            <span id="sum-month-lent" class="summary-val text-highlight orange">0 บาท</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">ได้รับคืน</span>
+            <span id="sum-month-repaid" class="summary-val text-highlight green">0 บาท</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">ดอกเบี้ยได้รับ</span>
+            <span id="sum-month-interest" class="summary-val text-highlight blue">0 บาท</span>
+          </div>
+          <div class="summary-item total-remaining-item">
+            <span class="summary-label">เงินคงเหลือ</span>
+            <span id="sum-month-remaining" class="summary-val font-bold">0 บาท</span>
+          </div>
+        </div>
+
+        <!-- Savings & Investment Rates -->
+        <div class="rates-container-grid mt-3">
+          <div class="rate-card savings-theme-card">
+            <div class="rate-header">
+              <span class="rate-icon">🌱</span>
+              <span class="rate-title">Savings Rate</span>
+            </div>
+            <div id="display-savings-rate" class="rate-value text-highlight green">0%</div>
+            <div id="savings-rate-label" class="rate-badge-desc">อัตราการออม 0%</div>
+          </div>
+
+          <div class="rate-card investment-theme-card">
+            <div class="rate-header">
+              <span class="rate-icon">📈</span>
+              <span class="rate-title">Investment Rate</span>
+            </div>
+            <div id="display-investment-rate" class="rate-value text-highlight blue">0%</div>
+            <div id="investment-rate-label" class="rate-badge-desc">อัตราการลงทุน 0%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Month-over-Month Comparison Panel -->
+      <div id="month-comparison-panel" class="month-comparison-panel mt-4 hidden">
+        <div class="card-sub-header mb-2">
+          <h3 class="text-md font-bold">🔄 เปรียบเทียบเดือนนี้ ↔ เดือนก่อน (<span id="compare-prev-month-name">-</span>)</h3>
+        </div>
+        <div class="compare-grid">
+          <div class="compare-card">
+            <span class="cmp-title">รายรับ</span>
+            <span id="cmp-income-diff" class="cmp-value">-</span>
+          </div>
+          <div class="compare-card">
+            <span class="cmp-title">รายจ่าย</span>
+            <span id="cmp-expense-diff" class="cmp-value">-</span>
+          </div>
+          <div class="compare-card">
+            <span class="cmp-title">เงินออม</span>
+            <span id="cmp-savings-diff" class="cmp-value">-</span>
+          </div>
+          <div class="compare-card">
+            <span class="cmp-title">เงินลงทุน</span>
+            <span id="cmp-investment-diff" class="cmp-value">-</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Insight Card -->
+      <div class="insight-section-container mt-4">
+        <div class="card-sub-header mb-2">
+          <h3 class="text-md font-bold">🧠 Financial Insight</h3>
+        </div>
+        <div id="financial-insights-list" class="insights-list-container">
+          <!-- Rendered insights -->
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="dashboard-charts-container mt-4">
+        <div class="card-sub-header mb-3">
+          <h3 class="text-md font-bold">📊 กราฟสรุปการเงิน</h3>
+        </div>
+        <div class="grid-2-col">
+          <div class="chart-wrapper-card">
+            <div class="chart-card-title">📈 รายรับ vs รายจ่าย</div>
+            <div class="canvas-holder">
+              <canvas id="chart-income-vs-expense" height="240"></canvas>
+            </div>
+          </div>
+          <div class="chart-wrapper-card">
+            <div class="chart-card-title">💎 แนวโน้มมูลค่าการเงินสุทธิ</div>
+            <div class="canvas-holder">
+              <canvas id="chart-net-worth-trend" height="240"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: Dashboard Overview -->
+    <section class="dashboard-section card">
+      <div class="card-header">
+        <h2>📊 ภาพรวมเดือนนี้</h2>
+        <div id="allocation-badge-container" class="badge-container">
+          <!-- Dynamic allocation percentage summary -->
+        </div>
+      </div>
+
+      <!-- Income Summary Banner -->
+      <div class="income-banner">
+        <div class="income-label">💰 รายได้รวมเดือนนี้</div>
+        <div id="display-month-income" class="income-amount">0 บาท</div>
+      </div>
+
+      <!-- Main Wallets Grid -->
+      <div class="wallets-grid">
+        <!-- 🌱 Savings Wallet Card -->
+        <div class="wallet-card savings-theme" id="card-wallet-savings">
+          <div class="wallet-icon-title">
+            <span class="wallet-emoji" id="emoji-savings">🌱</span>
+            <span class="wallet-name" id="name-savings">เงินออมสะสม</span>
+          </div>
+          <div class="wallet-balance" id="balance-savings">0 บาท</div>
+          <div class="wallet-badge" id="percent-savings">ออม 10%</div>
+        </div>
+
+        <!-- 📈 Investment Wallet Card -->
+        <div class="wallet-card investment-theme" id="card-wallet-investment">
+          <div class="wallet-icon-title">
+            <span class="wallet-emoji" id="emoji-investment">📈</span>
+            <span class="wallet-name" id="name-investment">เงินลงทุนสะสม</span>
+          </div>
+          <div class="wallet-balance" id="balance-investment">0 บาท</div>
+          <div class="wallet-badge" id="percent-investment">ลงทุน 5%</div>
+        </div>
+
+        <!-- 💳 Spending Wallet Card -->
+        <div class="wallet-card spending-theme" id="card-wallet-spending">
+          <div class="wallet-icon-title">
+            <span class="wallet-emoji" id="emoji-spending">💳</span>
+            <span class="wallet-name" id="name-spending">เงินใช้ได้</span>
+          </div>
+          <div class="wallet-balance" id="balance-spending">0 บาท</div>
+          <div class="wallet-badge" id="percent-spending">ใช้จ่าย 85%</div>
+        </div>
+      </div>
+
+      <!-- Additional Custom Wallets if present -->
+      <div id="custom-wallets-container" class="custom-wallets-grid"></div>
+
+      <!-- Primary Action Buttons -->
+      <div class="action-buttons-row">
+        <button id="btn-open-income-wizard" class="btn btn-primary btn-lg flex-1">
+          ＋ เพิ่มรายได้
+        </button>
+        <button id="btn-open-expense-modal" class="btn btn-warning btn-lg flex-1">
+          ＋ เพิ่มค่าใช้จ่าย
+        </button>
+      </div>
+    </section>
+
+    <!-- Section 2: Goals & Special Funds Grid -->
+    <div class="grid-2-col">
+      <!-- 🎯 Savings Goal Card -->
+      <section class="card goal-card">
+        <div class="card-header flex-between">
+          <h3>🎯 เป้าหมายเงินก้อน</h3>
+          <button id="btn-edit-goal" class="btn-icon-text text-sm" aria-label="ตั้งเป้าหมาย">
+            ✏️ ตั้งเป้า
+          </button>
+        </div>
+        <div class="goal-details">
+          <div class="goal-numbers">
+            <div>
+              <span class="label-sm">สะสมแล้ว</span>
+              <div id="goal-current-amount" class="text-highlight green">0 บาท</div>
+            </div>
+            <div class="text-right">
+              <span class="label-sm">เป้าหมาย</span>
+              <div id="goal-target-amount" class="text-muted">30,000 บาท</div>
+            </div>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="goal-progress-bar" class="progress-bar-fill green" style="width: 0%;"></div>
+          </div>
+          <div class="progress-footer">
+            <span id="goal-percent-text" class="text-sm font-bold">0%</span>
+            <span id="goal-status-text" class="text-sm text-muted">เริ่มต้นสร้างเงินก้อนแรก</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 🧾 Self Tax Fund Card -->
+      <section class="card self-tax-card">
+        <div class="card-header">
+          <h3>🧾 Self Tax Fund</h3>
+        </div>
+        <div class="self-tax-details">
+          <div class="tax-numbers">
+            <span class="label-sm">เงินภาษีตัวเองสะสม</span>
+            <div id="tax-fund-amount" class="text-highlight blue">0 / 500 บาท</div>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="tax-progress-bar" class="progress-bar-fill blue" style="width: 0%;"></div>
+          </div>
+          <div class="tax-footer">
+            <span id="tax-next-conversion" class="text-sm text-muted">อีก 500 บาท → เปลี่ยนเป็นเงินลงทุน</span>
+          </div>
+          <div class="tax-total-converted">
+            <span>📈 เงินลงทุนจาก Self Tax: </span>
+            <strong id="tax-total-investment-amount">0 บาท</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Section 3: Monthly Financial Visualizer Chart -->
+    <section class="card chart-section">
+      <div class="card-header">
+        <h3>📊 เงินเดือนนี้แบ่งอย่างไร?</h3>
+      </div>
+      <div class="chart-container">
+        <!-- Pure CSS/HTML Stacked Bar Visualizer -->
+        <div class="stacked-bar-bg">
+          <div id="bar-savings" class="bar-segment bar-savings" style="width: 0%;" title="เงินออม"></div>
+          <div id="bar-investment" class="bar-segment bar-investment" style="width: 0%;" title="เงินลงทุน"></div>
+          <div id="bar-expense" class="bar-segment bar-expense" style="width: 0%;" title="ใช้จริง"></div>
+          <div id="bar-remaining" class="bar-segment bar-remaining" style="width: 0%;" title="เหลือใช้จ่าย"></div>
+        </div>
+
+        <!-- Legend & Breakdown List -->
+        <div class="chart-legend-grid">
+          <div class="legend-item">
+            <span class="legend-color legend-green"></span>
+            <span class="legend-label">🌱 ออม:</span>
+            <span id="legend-savings-val" class="legend-value">0 บาท (0%)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color legend-blue"></span>
+            <span class="legend-label">📈 ลงทุน:</span>
+            <span id="legend-investment-val" class="legend-value">0 บาท (0%)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color legend-orange"></span>
+            <span class="legend-label">🧾 ใช้จริง:</span>
+            <span id="legend-expense-val" class="legend-value">0 บาท (0%)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color legend-gray"></span>
+            <span class="legend-label">💳 เหลือ:</span>
+            <span id="legend-remaining-val" class="legend-value">0 บาท (0%)</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Analysis & Financial Discipline Grid -->
+    <div class="grid-2-col">
+      <!-- 🧠 Financial Analysis Card -->
+      <section class="card analysis-card">
+        <div class="card-header">
+          <h3>🧠 วิเคราะห์เดือนนี้</h3>
+        </div>
+        <div id="analysis-status-badge" class="status-banner status-none">
+          ⚪ ยังไม่มีข้อมูล
+        </div>
+        <p id="analysis-description" class="analysis-text text-muted">
+          เริ่มบันทึกรายได้และค่าใช้จ่ายเพื่อดูการวิเคราะห์การเงินรายเดือนของคุณ
+        </p>
+      </section>
+
+      <!-- 🧠 Financial Discipline Score Card -->
+      <section class="card discipline-card">
+        <div class="card-header flex-between">
+          <h3>🧠 วินัยการเงิน</h3>
+          <span id="discipline-level-badge" class="level-badge badge-tier-1">🌱 เริ่มต้น</span>
+        </div>
+        <div class="discipline-content">
+          <div class="score-display">
+            <span id="discipline-score-num" class="score-number">0</span>
+            <span class="score-max">/ 100</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div id="discipline-progress-bar" class="progress-bar-fill gold" style="width: 0%;"></div>
+          </div>
+          <p id="discipline-message" class="discipline-msg text-sm text-muted">
+            🌱 เริ่มต้นสร้างนิสัยทางการเงิน คะแนนจะเพิ่มขึ้นจากพฤติกรรมทางการเงินของคุณ
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Section 5: Monthly Incomes & Expenses Lists -->
+    <div class="grid-2-col">
+      <!-- Income History List -->
+      <section class="card history-card">
+        <div class="card-header flex-between">
+          <h3>💰 รายได้เดือนนี้</h3>
+          <span id="income-count-badge" class="badge-count">0 รายการ</span>
+        </div>
+        <div id="income-list-container" class="history-list">
+          <div class="empty-state text-muted">ยังไม่มีรายการรายได้ในเดือนนี้</div>
+        </div>
+      </section>
+
+      <!-- Expense History List -->
+      <section class="card history-card">
+        <div class="card-header flex-between">
+          <h3>🧾 ค่าใช้จ่ายเดือนนี้</h3>
+          <span id="expense-count-badge" class="badge-count">0 รายการ</span>
+        </div>
+        <div id="expense-list-container" class="history-list">
+          <div class="empty-state text-muted">ยังไม่มีรายการค่าใช้จ่ายในเดือนนี้</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- NEW SECTION 6: 💸 เงินให้ยืม (Lending & Debt Tracking) -->
+    <section class="card lending-section">
+      <div class="card-header flex-between">
+        <h3>💸 เงินให้ยืม & ติดตามหนี้</h3>
+        <button id="btn-open-loan-modal" class="btn btn-primary btn-sm">
+          ＋ เพิ่มรายการเงินให้ยืม
+        </button>
+      </div>
+
+      <!-- Lending Dashboard Overview -->
+      <div class="lending-dashboard-grid mb-4">
+        <div class="lending-stat-box">
+          <span class="stat-label">💸 ปล่อยกู้ทั้งหมด</span>
+          <span id="lending-total-principal" class="stat-val text-main">0 บาท</span>
+        </div>
+        <div class="lending-stat-box">
+          <span class="stat-label">💰 ได้รับคืนแล้ว</span>
+          <span id="lending-total-repaid" class="stat-val text-highlight green">0 บาท</span>
+        </div>
+        <div class="lending-stat-box">
+          <span class="stat-label">⏳ ยังค้างอยู่</span>
+          <span id="lending-total-outstanding" class="stat-val text-highlight orange">0 บาท</span>
+        </div>
+        <div class="lending-stat-box">
+          <span class="stat-label">📈 ดอกเบี้ยคาดการณ์</span>
+          <span id="lending-expected-interest" class="stat-val text-highlight blue">0 บาท</span>
+        </div>
+        <div class="lending-stat-box">
+          <span class="stat-label">✅ ดอกเบี้ยได้รับจริง</span>
+          <span id="lending-actual-interest" class="stat-val text-highlight green">0 บาท</span>
+        </div>
+      </div>
+
+      <!-- Lending List Cards Container -->
+      <div id="lending-list-container" class="lending-cards-list">
+        <div class="empty-state text-muted">ยังไม่มีรายการเงินให้ยืม</div>
+      </div>
+    </section>
+
+    <!-- Section 7: Wallet Management Section -->
+    <section class="card wallet-management-section">
+      <div class="card-header flex-between">
+        <h3>⚙️ จัดการซองเงิน</h3>
+        <button id="btn-add-wallet" class="btn btn-outline btn-sm">
+          ＋ เพิ่มซองเงิน
+        </button>
+      </div>
+      <p class="text-sm text-muted mb-3">
+        กำหนดซองเงินได้ 3 ถึง 6 ใบ เปอร์เซ็นต์รวมต้องไม่เกิน 100%
+      </p>
+
+      <div id="wallet-settings-list" class="wallet-settings-grid">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="wallet-settings-footer">
+        <div class="total-percent-indicator">
+          <span>เปอร์เซ็นต์รวมปัจจุบัน: </span>
+          <strong id="display-total-wallet-percent">100%</strong>
+          <span id="unallocated-percent-badge" class="unallocated-badge"></span>
+        </div>
+        <button id="btn-save-wallet-settings" class="btn btn-primary">
+          💾 บันทึกการตั้งค่าซองเงิน
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>🌱 10% Rule by Kong — “ออมก่อน ค่อยใช้”</p>
+    <p class="text-xs text-muted">Personal Finance PWA App • LocalStorage Powered</p>
+  </footer>
+
+  <!-- ==================== MODALS & WIZARDS ==================== -->
+
+  <!-- MODAL 1: INCOME WIZARD (2 PAGES) -->
+  <div id="modal-income-wizard" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="wizard-steps-indicator">
+          <span id="wizard-step-label" class="step-badge">Step 1 / 2</span>
+        </div>
+        <h3 id="wizard-title">💰 เพิ่มรายได้</h3>
+        <button class="btn-close-modal" id="btn-close-income-wizard" aria-label="ปิด">✕</button>
+      </div>
+
+      <!-- WIZARD PAGE 1: Select or Create Income Source -->
+      <div id="wizard-page-1" class="wizard-page">
+        <label class="form-label">ขั้นตอนที่ 1: เลือกแหล่งรายได้</label>
+        
+        <!-- Preset / Saved Sources List -->
+        <div id="income-sources-list" class="sources-chip-grid">
+          <!-- Dynamically populated chips -->
+        </div>
+
+        <div class="form-group mt-3">
+          <label for="input-custom-source" class="form-label">หรือเพิ่มแหล่งรายได้ใหม่:</label>
+          <div class="input-with-button">
+            <input type="text" id="input-custom-source" class="form-control" placeholder="เช่น งานประจำ, งานร้านอาหาร">
+            <button id="btn-add-custom-source" class="btn btn-outline" type="button">＋ เพิ่ม</button>
+          </div>
+        </div>
+
+        <div class="wizard-actions">
+          <button id="btn-wizard-cancel-1" class="btn btn-subtle">ยกเลิก</button>
+          <button id="btn-wizard-next-1" class="btn btn-primary">ถัดไป ›</button>
+        </div>
+      </div>
+
+      <!-- WIZARD PAGE 2: Amount & Allocation Breakdown -->
+      <div id="wizard-page-2" class="wizard-page hidden">
+        <label class="form-label">ขั้นตอนที่ 2: จำนวนเงินรายได้</label>
+        
+        <div class="form-group">
+          <div class="selected-source-banner">
+            <span>แหล่งรายได้: </span>
+            <strong id="display-selected-source-name">-</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="input-income-amount" class="form-label">จำนวนเงิน (บาท):</label>
+          <input type="number" id="input-income-amount" class="form-control input-lg" placeholder="เช่น 4500" min="1" step="any">
+        </div>
+
+        <div class="form-group">
+          <label for="input-income-date" class="form-label">วันที่เพิ่มรายได้:</label>
+          <input type="date" id="input-income-date" class="form-control">
+        </div>
+
+        <!-- Real-time Allocation Breakdown -->
+        <div class="allocation-preview-card">
+          <div class="preview-header">
+            <h4>📊 สรุปการแบ่งเงินเข้า Wallet ทันที</h4>
+          </div>
+          <div id="wizard-allocation-preview-list" class="allocation-preview-list">
+            <!-- Dynamically populated wallet allocation rows -->
+          </div>
+        </div>
+
+        <div class="wizard-actions">
+          <button id="btn-wizard-back-2" class="btn btn-subtle">‹ ย้อนกลับ</button>
+          <button id="btn-wizard-confirm" class="btn btn-primary">ยืนยันเพิ่มรายได้</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: EXPENSE FORM -->
+  <div id="modal-expense" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="expense-modal-title">🧾 เพิ่มค่าใช้จ่าย</h3>
+        <button class="btn-close-modal" id="btn-close-expense-modal" aria-label="ปิด">✕</button>
+      </div>
+
+      <form id="form-add-expense" onsubmit="return false;">
+        <div class="form-group">
+          <label for="input-expense-name" class="form-label">ชื่อรายการ:</label>
+          <input type="text" id="input-expense-name" class="form-control" placeholder="เช่น ค่าอาหารกลางวัน, ค่าเดินทาง" required>
+        </div>
+
+        <div class="form-group">
+          <label for="select-expense-category" class="form-label">หมวดหมู่:</label>
+          <div class="input-with-button">
+            <select id="select-expense-category" class="form-control">
+              <option value="🍜 อาหาร">🍜 อาหาร</option>
+              <option value="🛵 เดินทาง">🛵 เดินทาง</option>
+              <option value="🏠 ที่พัก">🏠 ที่พัก</option>
+              <option value="📱 โทรศัพท์/อินเทอร์เน็ต">📱 โทรศัพท์/อินเทอร์เน็ต</option>
+              <option value="📚 การศึกษา/พัฒนาตัวเอง">📚 การศึกษา/พัฒนาตัวเอง</option>
+              <option value="🛍️ ช้อปปิ้ง">🛍️ ช้อปปิ้ง</option>
+              <option value="🎮 ความบันเทิง">🎮 ความบันเทิง</option>
+              <option value="🤝 ช่วยเหลือผู้อื่น">🤝 ช่วยเหลือผู้อื่น</option>
+              <option value="📦 อื่น ๆ">📦 อื่น ๆ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="input-expense-amount" class="form-label">จำนวนเงิน (บาท):</label>
+          <input type="number" id="input-expense-amount" class="form-control input-lg" placeholder="เช่น 100" min="1" step="any" required>
+        </div>
+
+        <div class="form-group">
+          <label for="input-expense-date" class="form-label">วันที่:</label>
+          <input type="date" id="input-expense-date" class="form-control">
+        </div>
+
+        <!-- Self Tax Toggle Option -->
+        <div class="self-tax-toggle-box">
+          <div class="toggle-header">
+            <span>🧾 หัก Self Tax 10% จากค่าใช้จ่ายนี้หรือไม่?</span>
+            <label class="switch">
+              <input type="checkbox" id="checkbox-self-tax">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div id="self-tax-preview-info" class="self-tax-preview-info hidden">
+            <div class="text-sm">
+              ค่าใช้จ่าย: <span id="preview-expense-val">0</span> บาท + Self Tax (10%): <span id="preview-tax-val">0</span> บาท
+            </div>
+            <div class="text-sm font-bold text-highlight orange">
+              ยอดที่ต้องหักจากซองเงินใช้จ่ายจริง: <span id="preview-total-spend-val">0</span> บาท
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-expense" class="btn btn-subtle">ยกเลิก</button>
+          <button type="button" id="btn-save-expense" class="btn btn-warning">บันทึกค่าใช้จ่าย</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: EDIT GOAL MODAL -->
+  <div id="modal-goal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>✏️ ตั้งเป้าหมายเงินก้อน</h3>
+        <button class="btn-close-modal" id="btn-close-goal-modal" aria-label="ปิด">✕</button>
+      </div>
+      <div class="form-group">
+        <label for="input-goal-amount" class="form-label">เป้าหมายเงินออม (บาท):</label>
+        <input type="number" id="input-goal-amount" class="form-control input-lg" placeholder="30000" min="1000" step="1000">
+      </div>
+      <div class="modal-actions">
+        <button id="btn-cancel-goal" class="btn btn-subtle">ยกเลิก</button>
+        <button id="btn-save-goal" class="btn btn-primary">บันทึกเป้าหมาย</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 4: ADD / EDIT WALLET MODAL -->
+  <div id="modal-wallet-edit" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="wallet-modal-title">⚙️ แก้ไขซองเงิน</h3>
+        <button class="btn-close-modal" id="btn-close-wallet-modal" aria-label="ปิด">✕</button>
+      </div>
+      <form id="form-wallet" onsubmit="return false;">
+        <input type="hidden" id="input-wallet-id">
+        <div class="form-group">
+          <label for="input-wallet-emoji" class="form-label">Emoji ไอคอน:</label>
+          <input type="text" id="input-wallet-emoji" class="form-control" placeholder="🌱" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label for="input-wallet-name" class="form-label">ชื่อซองเงิน:</label>
+          <input type="text" id="input-wallet-name" class="form-control" placeholder="เช่น เงินออมพิเศษ">
+        </div>
+        <div class="form-group">
+          <label for="input-wallet-percent" class="form-label">เปอร์เซ็นต์จัดสรร (%):</label>
+          <input type="number" id="input-wallet-percent" class="form-control" placeholder="10" min="0" max="100" step="1">
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-wallet" class="btn btn-subtle">ยกเลิก</button>
+          <button type="button" id="btn-save-wallet-item" class="btn btn-primary">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- NEW MODAL 5: ADD / EDIT LOAN MODAL -->
+  <div id="modal-loan" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="loan-modal-title">💸 เพิ่มรายการเงินให้ยืม</h3>
+        <button class="btn-close-modal" id="btn-close-loan-modal" aria-label="ปิด">✕</button>
+      </div>
+      <form id="form-loan" onsubmit="return false;">
+        <input type="hidden" id="input-loan-id">
+
+        <div class="form-group">
+          <label for="input-loan-borrower" class="form-label">ชื่อผู้ยืม:</label>
+          <input type="text" id="input-loan-borrower" class="form-control" placeholder="เช่น นาย A, คุณ B" required>
+        </div>
+
+        <div class="form-group">
+          <label for="input-loan-principal" class="form-label">จำนวนเงินต้น (บาท):</label>
+          <input type="number" id="input-loan-principal" class="form-control input-lg" placeholder="เช่น 10000" min="1" step="any" required>
+        </div>
+
+        <div class="grid-2-col">
+          <div class="form-group">
+            <label for="input-loan-rate" class="form-label">อัตราดอกเบี้ย (%):</label>
+            <input type="number" id="input-loan-rate" class="form-control" placeholder="เช่น 2 หรือ 1.5" min="0" step="any" value="2">
+          </div>
+          <div class="form-group">
+            <label for="select-loan-unit" class="form-label">หน่วยดอกเบี้ย:</label>
+            <select id="select-loan-unit" class="form-control">
+              <option value="month">ต่อเดือน</option>
+              <option value="year">ต่อปี</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">ระยะเวลา:</label>
+          <div class="input-with-button">
+            <input type="number" id="input-loan-years" class="form-control" placeholder="จำนวนปี" min="0" value="0">
+            <span class="self-center text-sm">ปี</span>
+            <input type="number" id="input-loan-months" class="form-control" placeholder="จำนวนเดือน" min="0" max="11" value="6">
+            <span class="self-center text-sm">เดือน</span>
+          </div>
+        </div>
+
+        <div class="grid-2-col">
+          <div class="form-group">
+            <label for="input-loan-start-date" class="form-label">วันที่เริ่มให้ยืม:</label>
+            <input type="date" id="input-loan-start-date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="input-loan-due-date" class="form-label">วันที่กำหนดคืน:</label>
+            <input type="date" id="input-loan-due-date" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="select-loan-wallet" class="form-label">หักเงินต้นออกจากซองเงิน:</label>
+          <select id="select-loan-wallet" class="form-control">
+            <!-- Dynamically populated with active wallets -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="input-loan-note" class="form-label">หมายเหตุ:</label>
+          <input type="text" id="input-loan-note" class="form-control" placeholder="เช่น รายละเอียดเพิ่มเติม">
+        </div>
+
+        <!-- Real-time Calculated Interest Preview Box -->
+        <div class="self-tax-toggle-box">
+          <div class="text-sm font-bold mb-1" style="color: var(--color-primary);">📊 สรุปการคำนวณดอกเบี้ย (Simple Interest)</div>
+          <div class="text-sm">
+            ดอกเบี้ยคำนวณได้: <strong id="preview-loan-interest-val" class="text-highlight blue">0 บาท</strong>
+          </div>
+          <div class="text-sm font-bold mt-1">
+            ยอดที่ต้องคืนทั้งหมด: <strong id="preview-loan-total-val" class="text-highlight green">0 บาท</strong>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-loan" class="btn btn-subtle">ยกเลิก</button>
+          <button type="button" id="btn-save-loan" class="btn btn-primary">บันทึกรายการกู้</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- NEW MODAL 6: REPAYMENT FORM MODAL -->
+  <div id="modal-loan-repayment" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🔄 บันทึกการคืนเงิน</h3>
+        <button class="btn-close-modal" id="btn-close-repayment-modal" aria-label="ปิด">✕</button>
+      </div>
+      <form id="form-repayment" onsubmit="return false;">
+        <input type="hidden" id="input-repayment-loan-id">
+
+        <div class="selected-source-banner mb-3">
+          <div>ผู้ยืม: <strong id="display-repayment-borrower">-</strong></div>
+          <div class="text-xs text-muted mt-1">
+            ยอดทั้งหมด: <span id="display-repayment-total">0</span> | 
+            คืนแล้ว: <span id="display-repayment-paid" class="text-highlight green">0</span> | 
+            คงเหลือ: <span id="display-repayment-remaining" class="text-highlight orange">0</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="input-repayment-amount" class="form-label">จำนวนเงินที่คืน (บาท):</label>
+          <input type="number" id="input-repayment-amount" class="form-control input-lg" placeholder="เช่น 5000" min="1" step="any" required>
+        </div>
+
+        <div class="form-group">
+          <label for="input-repayment-date" class="form-label">วันที่รับคืน:</label>
+          <input type="date" id="input-repayment-date" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="select-repayment-wallet" class="form-label">นำเงินเข้าซองเงิน:</label>
+          <select id="select-repayment-wallet" class="form-control">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="input-repayment-note" class="form-label">หมายเหตุ:</label>
+          <input type="text" id="input-repayment-note" class="form-control" placeholder="เช่น ผ่อนงวดที่ 1">
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-repayment" class="btn btn-subtle">ยกเลิก</button>
+          <button type="button" id="btn-save-repayment" class="btn btn-primary">บันทึกการคืนเงิน</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- NEW MODAL 7: REPAYMENT HISTORY MODAL -->
+  <div id="modal-loan-history" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📜 ประวัติการคืนเงิน</h3>
+        <button class="btn-close-modal" id="btn-close-loan-history-modal" aria-label="ปิด">✕</button>
+      </div>
+      <div class="selected-source-banner mb-3">
+        <div class="font-bold" id="display-history-borrower">-</div>
+        <div class="text-xs text-muted" id="display-history-summary">-</div>
+      </div>
+      <div id="loan-history-list-container" class="history-list">
+        <!-- Rendered history list -->
+      </div>
+      <div class="modal-actions justify-center">
+        <button id="btn-close-history-ok" class="btn btn-subtle px-6">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 8: CONFIRMATION / ALERT DIALOG -->
+  <div id="modal-alert" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card alert-modal-card">
+      <div class="alert-icon" id="alert-icon-symbol">⚠️</div>
+      <h3 id="alert-title">แจ้งเตือน</h3>
+      <p id="alert-message" class="alert-message-text">รายละเอียดข้อความ</p>
+      <div class="modal-actions justify-center">
+        <button id="btn-alert-ok" class="btn btn-primary px-6">ตกลง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 9: RESET DATA DOUBLE CONFIRMATION -->
+  <div id="modal-reset" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card danger-border">
+      <div class="modal-header">
+        <h3 id="reset-modal-title">⚠️ ยืนยันการรีเซ็ตข้อมูล</h3>
+        <button class="btn-close-modal" id="btn-close-reset-modal" aria-label="ปิด">✕</button>
+      </div>
+      <div id="reset-step-1" class="reset-step">
+        <p class="text-danger font-bold">
+          ⚠️ คุณต้องการรีเซ็ตข้อมูลทั้งหมดหรือไม่?
+        </p>
+        <p class="text-sm text-muted mt-2">
+          รายได้ ค่าใช้จ่าย เงินออม เงินลงทุน เงินให้ยืม คะแนนวินัย และข้อมูลทดสอบทั้งหมดจะถูกลบอย่างถาวร ไม่สามารถกู้คืนได้
+        </p>
+        <div class="modal-actions mt-4">
+          <button id="btn-reset-cancel" class="btn btn-subtle">ยกเลิก</button>
+          <button id="btn-reset-proceed-step2" class="btn btn-danger">ดำเนินการต่อ ›</button>
+        </div>
+      </div>
+      <div id="reset-step-2" class="reset-step hidden">
+        <p class="text-danger font-bold">
+          🛑 ยืนยันอีกครั้ง! ลบข้อมูลทั้งหมดออกจากอุปกรณ์?
+        </p>
+        <div class="modal-actions mt-4">
+          <button id="btn-reset-cancel-2" class="btn btn-subtle">ยกเลิก</button>
+          <button id="btn-reset-final-confirm" class="btn btn-danger">ยืนยันลบข้อมูลทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>
